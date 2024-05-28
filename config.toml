@@ -1,4 +1,4 @@
-baseURL = "https://mngb.github.io/notes"
+baseURL = "https://mngb.github.io/"
 languageCode = "en-us"
 title = "Redef 的笔记"
 theme = "PaperMod"
