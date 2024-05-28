@@ -1,9 +1,8 @@
-baseURL = "https://mngb.github.io/notes"
+baseURL = "http://example.org/"
 languageCode = "en-us"
 title = "Redef 的笔记"
 theme = "PaperMod"
 
-# relativeURLs = true
 paginate = 5
 enableInlineShortcodes = true
 enableRobotsTXT = true
