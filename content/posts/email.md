@@ -31,9 +31,7 @@ send email behind socks5 proxy tool
     to
     <~/>
 2.  configure emacs variables in
-    [mu4e]({{< relref "emacs_init#mu4e" >}})
 3.  configure msmtp variables in
-    [msmtp](/home/pk/workspace/rdf/rdf/redef/repos/rdf-mix/email/.msmtprc)
 
 
 ## run {#run}
