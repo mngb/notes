@@ -1,6 +1,6 @@
 +++
 title = "org style"
-author = ["PENG Kui"]
+author = ["PENG Kevin"]
 tags = ["style", "org", "org-mode"]
 draft = false
 +++
@@ -99,7 +99,7 @@ start with `<name> ::`
 
 ### image {#image}
 
-<a id="org8b0880b"></a>
+<a id="orga09db0f"></a>
 
 ![](/ox-hugo/example.jpg)
 若要在文档中显示成图片，不能为 link 添加 description, 不然会显示成链接。

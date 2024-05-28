@@ -1,6 +1,6 @@
 +++
 title = "c"
-author = ["PENG Kui"]
+author = ["PENG Kevin"]
 tags = ["PL", "c"]
 draft = false
 +++

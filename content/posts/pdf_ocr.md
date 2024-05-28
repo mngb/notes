@@ -1,14 +1,8 @@
 +++
 title = "pdf-ocr"
-author = ["PENG Kui"]
+author = ["PENG Kevin"]
 draft = false
 +++
-
-A:PROPERTIES:
-:ID:       91c44778-d4d8-4f9b-97c9-27963d7aaed3
-
-:END:
-
 
 ## pdf split and merge {#pdf-split-and-merge}
 

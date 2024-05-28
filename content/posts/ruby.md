@@ -1,6 +1,6 @@
 +++
 title = "ruby 语言笔记"
-author = ["PENG Kui"]
+author = ["PENG Kevin"]
 tags = ["ruby"]
 draft = false
 +++

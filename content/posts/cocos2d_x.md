@@ -1,6 +1,6 @@
 +++
 title = "cocos2d-x"
-author = ["PENG Kui"]
+author = ["PENG Kevin"]
 draft = false
 +++
 
