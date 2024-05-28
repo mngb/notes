@@ -1,0 +1,31 @@
+baseURL = "http://example.org/"
+languageCode = "en-us"
+title = "Redef 的笔记"
+theme = "PaperMod"
+ShowToc = true
+TocOpen = true
+
+[outputs]
+home = [ "HTML", "RSS", "JSON" ]
+
+[params.profileMode]
+enabled = true
+title = "Redef 的笔记"
+subtitle = "使用 Emacs + Org-Roam 编写"
+imageUrl = "<image link>"
+imageTitle = "<title of image as alt>"
+imageWidth = 120
+imageHeight = 120
+
+[[params.profileMode.buttons]]
+name = "Github"
+url = "https://github.com/"
+
+[params.fuseOpts]
+isCaseSensitive = false
+shouldSort = true
+location = 0
+distance = 1_000
+threshold = 0.4
+minMatchCharLength = 0
+keys = [ "title", "permalink", "summary", "content" ]
