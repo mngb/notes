@@ -2,12 +2,29 @@ baseURL = "http://example.org/"
 languageCode = "en-us"
 title = "Redef 的笔记"
 theme = "PaperMod"
-ShowToc = true
-TocOpen = true
+
+paginate = 5
+enableInlineShortcodes = true
+enableRobotsTXT = true
 
 [outputs]
 home = [ "HTML", "RSS", "JSON" ]
 
+[params]
+ShowReadingTime = true
+ShowToc = true
+TocOpen = true
+ShowCodeCopyButtons = true
+comments = true
+ShowShareButtons = true
+# disableSpecial1stPost: true
+displayFullLangName = true
+ShowPostNavLinks = true
+ShowBreadCrumbs = true
+ShowRssButtonInSectionTermList = true
+ShowAllPagesInArchive = true
+ShowPageNums = true
+  
 [params.profileMode]
 enabled = true
 title = "Redef 的笔记"
@@ -29,3 +46,12 @@ distance = 1_000
 threshold = 0.4
 minMatchCharLength = 0
 keys = [ "title", "permalink", "summary", "content" ]
+
+[languages.en]
+languageName = "English"
+weight = 1
+
+[[languages.en.menu.main]]
+name = "Search"
+url = "search/"
+weight = 10
