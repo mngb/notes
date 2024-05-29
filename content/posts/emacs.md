@@ -8,10 +8,10 @@ draft = false
 ## Emacs 手册 {#emacs-手册}
 
 emacs
-: [emacs.pdf](ox-hugo/emacs.pdf)
+: [emacs.pdf](/ox-hugo/emacs.pdf)
 
 elisp
-: [elisp.pdf](ox-hugo/elisp.pdf)
+: [elisp.pdf](/ox-hugo/elisp.pdf)
 
 
 ## Emacs 配置 {#emacs-配置}
