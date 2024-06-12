@@ -170,7 +170,7 @@
                     .data(nodes)
                     .join("a")
                     .attr("xlink:href", d => {
-                        return "/posts/" + d.lnk;
+                        return "/notes/posts/" + d.lnk;
                     })
                     .attr("id", d => "circle_" + d.lnk)
                     .append("circle")
