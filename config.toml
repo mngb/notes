@@ -31,8 +31,8 @@ title = "Redef 的笔记"
 subtitle = "使用 Emacs + Org-Roam 编写"
 imageUrl = "https://mngb.github.io/ox-hugo/liangzhi.jpg"
 imageTitle = "可爱的黄笃读"
-imageWidth = 480
-imageHeight = 320
+imageWidth = 600
+imageHeight = 400
 
 [[params.profileMode.buttons]]
 name = "代码"
