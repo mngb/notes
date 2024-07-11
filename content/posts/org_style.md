@@ -86,7 +86,8 @@ start with `<name> ::`
 
 ## latex embedded {#latex-embedded}
 
-\\(a^2=b\\), use `org-preview-latex` to preview
+\\(a^2=b\\), 行内嵌入，use `org-preview-latex` to preview
+\\[a^2 = b\\], 行间嵌入。
 
 
 ## 图片和链接 {#图片和链接}
@@ -99,7 +100,7 @@ start with `<name> ::`
 
 ### image {#image}
 
-<a id="orga09db0f"></a>
+<a id="org69e6b7d"></a>
 
 ![](/ox-hugo/example.jpg)
 若要在文档中显示成图片，不能为 link 添加 description, 不然会显示成链接。

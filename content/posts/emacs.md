@@ -47,3 +47,10 @@ elisp
 ### get image size {#get-image-size}
 
 `(image-size (image-get-display-property) :pixels)`
+
+
+### Failed to verify signature archive-contents.sig {#failed-to-verify-signature-archive-contents-dot-sig}
+
+1.  `M-x set-variable RET package-check-signatures RET nil`
+2.  `M-x package-refresh-contents`
+3.  install `gnu-elpa-keyring-updated` package

@@ -475,7 +475,7 @@ draft = false
           ("e" . async-shell-command)
           ("E" . r-os-with-shell-open)
           ("t" . untabify)
-          ("E" . r-start-everything)
+          ("D" . delete-other-frames)
           ("C" . move-to-column)
           (")" . check-parens)
           ("v" . r-start-vpn)
@@ -808,6 +808,8 @@ draft = false
     (setq apropos-do-all t)   ;apropos wide find v, find f
     (fset 'yes-or-no-p 'y-or-n-p) ;for users prompt
     (show-paren-mode t) ;for paren auto show
+    (which-func-mode t) ;show function-name in mode-line
+    (superword-mode t) ;handle '_' and '-' as part of word
     (column-number-mode nil) ;disable column show, this may slower edit
     (with-windows-nt
      (global-hl-line-mode 1) ;highlight current line
@@ -831,6 +833,26 @@ draft = false
     (global-linum-mode 0)
     (setq linum-format "%d:")
     (defun r-show-current-column-number () (interactive) (current-column))
+
+    ;;; https://stackoverflow.com/questions/384284/how-do-i-rename-an-open-file-in-emacs
+    (defun rename-current-buffer-file ()
+      "Renames current buffer and file it is visiting."
+      (interactive)
+      (let* ((name (buffer-name))
+             (filename (buffer-file-name))
+             (basename (file-name-nondirectory filename)))
+        (if (not (and filename (file-exists-p filename)))
+            (error "Buffer '%s' is not visiting a file!" name)
+          (let ((new-name (read-file-name "New name: "
+                                          (file-name-directory filename) basename nil basename)))
+            (if (get-buffer new-name)
+                (error "A buffer named '%s' already exists!" new-name)
+              (rename-file filename new-name 1)
+              (rename-buffer new-name)
+              (set-visited-file-name new-name)
+              (set-buffer-modified-p nil)
+              (message "File '%s' successfully renamed to '%s'"
+                       name (file-name-nondirectory new-name)))))))
 
     ;; initial buffer setting
     (setq initial-major-mode 'org-mode)
@@ -868,7 +890,7 @@ draft = false
     ;; start emacs server
     (add-hook 'after-init-hook 'server-start)
     ;;if file is system file, make it readonly
-    (setq r-sys-file-safe-mode 1)
+    (setq r-sys-file-safe-mode 0)
     (defun r-switch-sys-file-safe-mode ()
       (interactive)
       (if (> r-sys-file-safe-mode 0)
@@ -902,12 +924,15 @@ draft = false
     (:map redef-global-key-bindings-low-effort-map
           ("I" . r-switch-sys-file-safe-mode)
           ("O" . r-show-current-column-number)
+          ("w" . rename-current-buffer-file)
           ("f" . ffap-alternate-file-other-window))
     )
 ```
 
 
 ## ext packages <span class="tag"><span class="ext">ext</span></span> {#ext-packages}
+
+use command `package-delete` to remove package
 
 
 ### use-package <span class="tag"><span class="use_package">use-package</span></span> {#use-package}
@@ -1190,6 +1215,12 @@ use 'company-diag' to view current using backend
   (setq org-directory "~/.emacs.d/redef/org")
   (setq org-agenda-files (concat org-directory "/agendas"))
   (setq org-default-notes-file (concat org-directory "/captures.org"))
+
+  ;; jekyll blog depends on this configuration
+  ;; 后缀 "./" 不能去掉，否则 org-blog 导出时会报错
+  (setq org-preview-latex-image-directory "../assets/./")
+  (setq org-image-actual-width nil)
+
   (setq org-capture-templates
         '(("t" "Task to be done" entry (file+headline org-default-notes-file "TASK")
            "* TODO %U %?\n")
@@ -1209,7 +1240,9 @@ use 'company-diag' to view current using backend
       (mapc (lambda (file)
               (with-current-buffer
                   (find-file-noselect file)
-                (org-hugo-export-wim-to-md)))
+                (let ((org-preview-latex-image-directory "static/ltximg/")
+                      (org-latex-preview-ltxpng-directory "static/ltximg/"))
+                  (org-hugo-export-wim-to-md))))
             (directory-files-recursively org-roam-directory ".*.org"))
       (start-process "*hugo-gen*" nil "python3" (concat org-hugo-base-dir "/content/d3/dump_roam_db.py")))
     (setq org-hugo-base-dir (concat ext-root-workspace "/hugo")))
@@ -1486,6 +1519,12 @@ if report error, run inf-ruby firstly.
   (setq projectile-project-search-path
         (list (concat (getenv "R_WORKSPACE_DIR"))))
   (setq projectile-git-submodule-command nil) ; avoid echo error in windows
+  (projectile-register-project-type 'npm '("package.json")
+                                    :project-file "package.json"
+                                    :compile "npm install"
+                                    :test "npm test"
+                                    :run "npm start"
+                                    :test-suffix ".spec")
   :bind
   (:map redef-global-key-bindings-projectile-map
         ("s" . projectile-discover-projects-in-directory)
@@ -2291,6 +2330,22 @@ whether tool
 ```
 
 
+#### react <span class="tag"><span class="react">react</span></span> {#react}
+
+使用最新的 lsp-mode 和 dap-mode。并安装 `rjsx-mode`
+在 react 项目中运行 `lsp` 即可。
+
+
+#### typescript <span class="tag"><span class="ts">ts</span></span> {#typescript}
+
+```emacs-lisp
+(use-package typescript-mode
+  :demand t
+  :config
+  (add-to-list 'auto-mode-alist '("\\.ts?\\'" . typescript-mode)))
+```
+
+
 ### email <span class="tag"><span class="email">email</span></span> {#email}
 
 
@@ -2693,20 +2748,6 @@ cmake-mode exist in cmake source code.
 
 ### dired <span class="tag"><span class="dired">dired</span></span> {#dired}
 
-```emacs-lisp
-(use-package neotree
-  :demand t
-  :ensure t
-  :init
-  (defun r-dir-tree ()
-    (interactive)
-    (neotree-dir default-directory))
-  :bind*
-  (:map redef-global-key-bindings-low-effort-map
-        ("D" . r-dir-tree)
-        ("d" . neotree-toggle)))
-```
-
 
 ### lsp-mode <span class="tag"><span class="lsp">lsp</span></span> {#lsp-mode}
 
@@ -2731,6 +2772,7 @@ Run `bundle exec solargraph bundle` under project dir.
   :init
   :config
   (setq gc-cons-threshold 100000000)
+  (setq read-process-output-max (* 1024 1024))
   (setq read-process-output-max (* 1024 1024))
   (setq lsp-prefer-capf t)
   (setq lsp-idle-delay 0.500)
@@ -3195,13 +3237,14 @@ create google style format `=clang-format -style=google -dump-config > .clang-fo
 use `gdb` command to debug cpp instead, dap-mode is a vscode plugin.
 
 ```emacs-lisp
-;; (use-package dap-mode
-;;   :defer
-;;   :ensure t
-;;   :after (lsp-mode)
-;;   :config
-;;   (require 'dap-lldb)
-;;   )
+(use-package dap-mode
+  :defer
+  :ensure t
+  :after (lsp-mode)
+  :config
+  (require 'dap-lldb)
+  (require 'dap-chrome)
+)
 ```
 
 
@@ -3325,9 +3368,9 @@ slim not maintance, use haml instead.
         ("M-h" . projectile-rails-find-helper)
         ("M-t" . projectile-rails-find-spec)
         ("M-l" . projectile-rails-find-layout)
-        ("M-f" . projectile-rails-goto-file-at-point)
-        ("M-r" . projectile-rails-goto-routes)
+        ("M-r" . projectile-rails-generate)
         ("M-g" . projectile-rails-mode-goto-map)
+        ("M-d" . projectile-rails-find-migration)
    ))
 ```
 
@@ -3654,10 +3697,10 @@ Make soft link in `$HOME` for `~/.cargo`, `~/.rustup`
   :requires (frame-fns)
   :load-path "~/.emacs.d/ext/frame/framecmds/"
   :bind*
-  (("M-<down>" . enlarge-frame)
-   ("M-<right>" . enlarge-frame-horizontally)
-   ("M-<up>" . shrink-frame)
-   ("M-<left>" . shrink-frame-horizontally)
+  (;("C-<down>" . enlarge-frame) ;; conflict with move
+   ;("M-<right>" . enlarge-frame-horizontally) ;; conflict with org command
+   ;("C-<up>" . shrink-frame) ;; conflict with move
+   ;("M-<left>" . shrink-frame-horizontally) ;; conflict with org command
    :map redef-global-key-bindings-low-effort-map
    ("W" . r-frame-transparency))
   :config
@@ -3670,6 +3713,8 @@ Make soft link in `$HOME` for `~/.cargo`, `~/.rustup`
 
 
 #### bookmark+ <span class="tag"><span class="bookmark_plus">bookmark-plus</span></span> {#bookmark-plus}
+
+用 `bookmark-load` 加载最近保存的 bookmark 文件。
 
 ```emacs-lisp
 (use-package bookmark)

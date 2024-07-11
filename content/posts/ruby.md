@@ -37,6 +37,9 @@ push own gem to <https://rubygems.org>
     2.  use `gem signin` and enter email and password
     3.  use `gem push *.gem` to push to server
 
+update gems
+: `gem update --system`
+
 
 ### bundle {#bundle}
 
@@ -62,6 +65,18 @@ show document
 
 list
 : ls
+
+查看对象中的方法：=ls obj=
+
+查看方法所在文件：=$ func=
+
+查看当前所处环境位置：=@=
+
+查看父类：=xxx.superclass=
+
+查看所属类型：=xxx.class=
+
+查看继承关系：=XXXClass.ancestors=
 
 
 ### rubocop {#rubocop}
@@ -233,8 +248,15 @@ run `ruby -run -e httpd . -p 8000`
 ### rbenv {#rbenv}
 
 
+### doorkeeper {#doorkeeper}
+
+
+### grape {#grape}
+
+
 ## 参考文档 {#参考文档}
 
 -   介绍基本语法的书籍 [programming_ruby_4ed.pdf](/ox-hugo/programming_ruby_4ed.pdf)
 -   深入实战学习 [ruby-deep-dive.pdf](/ox-hugo/ruby-deep-dive.pdf)
 -   编码规范 [README-zhCN.md](/ox-hugo/README-zhCN.md)
+-   source [ruby2.7.1](../../../../bext/code/localize/ruby/ruby-2.7.1/main.c)

@@ -21,6 +21,8 @@ draft = false
 #id2
   -# #{} 间插入的是 ruby 代码计算结果
   #id3.class(attr1="#{1+1}")
+    -# #id 后面有代码时，用 {:id => <id_name>} 形式
+    %p1{:id => #{id_value}}
 ```
 
 

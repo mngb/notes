@@ -30,6 +30,29 @@ draft = false
 ### 更换主题 {#更换主题}
 
 
+#### 安装主题 {#安装主题}
+
+1.  修改 `Gemfile` 文件，添加主题对应的 `gem`, 并执行 `bundle` 安装
+2.  执行 `gem info <theme-gem-name>` 查看安装位置
+3.  将主题 `gem` 安装位置对应内容拷贝到当前项目
+4.  在 `_config.yml` 文件中对主题进行配置
+
+
+#### minimal-mistakes-jekyll 主题主要配置项 {#minimal-mistakes-jekyll-主题主要配置项}
+
+search
+: 是否启动搜索
+
+read_time
+: 是否显示预估的博客阅读时长
+
+show_date
+: 是否显示博客创建日期
+
+author_profile
+: 是否显示该篇博客作者信息页
+
+
 ### 安装插件 {#安装插件}
 
 
