@@ -32,12 +32,6 @@ int main(int argn, char* argv[]) {
 }
 ```
 
-```text
-1 > 0
-2 > 0
-2 > 1
-```
-
 
 ## Language {#language}
 
@@ -49,6 +43,13 @@ int main(int argn, char* argv[]) {
 clang-format
 : `clang-format -style=Google -dump-config > .clang-format`
     导出 Google 风格的 format 配置。
+
+
+### gdb {#gdb}
+
+-   断点信息 `info breakpoints`
+-   删除断点 `delete n`
+-   调用函数 `call function(arg1, arg2)`
 
 
 ## 参考链接 {#参考链接}

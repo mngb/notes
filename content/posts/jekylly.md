@@ -67,3 +67,8 @@ author_profile
     注释掉 `gem "jekyll"`
 3.  push 到 github (注意 assets 目录需要提交，\__site 目录不必提交), 自动执行 action 后，在
     deploy 的输出会看到 public 页面链接。
+
+
+### org-mode 中文档编写注意事项 {#org-mode-中文档编写注意事项}
+
+不要有 `{{` 前缀，会被解释成 liqui 格式语法文件。

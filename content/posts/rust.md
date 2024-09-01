@@ -48,10 +48,6 @@ fn main() {
 }
 ```
 
-```text
-1
-```
-
 
 ### 枚举 {#枚举}
 
@@ -78,10 +74,6 @@ fn main() {
 }
 ```
 
-```text
-x=1
-```
-
 
 #### if let {#if-let}
 
@@ -92,10 +84,6 @@ fn main() {
         println!("x={}", y);
     }
 }
-```
-
-```text
-x=1
 ```
 
 
@@ -149,10 +137,6 @@ fn main() {
         break;
     }
 }
-```
-
-```text
-0
 ```
 
 
@@ -261,10 +245,6 @@ fn main() {
     }
     ```
 
-    ```text
-    Args is ["target/debug/cargok5wwMM"]
-    ```
-
 <!--list-separator-->
 
 -  std::fs 文件操作
@@ -290,10 +270,6 @@ fn main() {
     }
     ```
 
-    ```text
-    error: Could not compile `cargoiWa36D`.
-    ```
-
 <!--list-separator-->
 
 -  std::time 和 chrono 时间库
@@ -316,10 +292,6 @@ fn main() {
             )
         );
     }
-    ```
-
-    ```text
-    202210222210
     ```
 
 

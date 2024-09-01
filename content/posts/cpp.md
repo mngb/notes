@@ -31,10 +31,6 @@ int main()
 }
 ```
 
-```text
-Hello world
-```
-
 
 ## emacs environment {#emacs-environment}
 

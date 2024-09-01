@@ -54,3 +54,18 @@ elisp
 1.  `M-x set-variable RET package-check-signatures RET nil`
 2.  `M-x package-refresh-contents`
 3.  install `gnu-elpa-keyring-updated` package
+
+
+### imenu {#imenu}
+
+查找定义，找不到定义时，可以启用 lsp-mode
+
+
+### occur {#occur}
+
+单个文件内查找行
+
+
+### rgrep {#rgrep}
+
+多个文件内查找行

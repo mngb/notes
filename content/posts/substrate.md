@@ -148,11 +148,6 @@ yarn start
     ls /tmp_disk/node01/chains/local_testnet/keystore
     ```
 
-    ```text
-    617572610036e7e73871842bc2c4b878a6a9bea1b291a5bfc44c8341615ffcdbdc6d2839
-    6772616e9adccc1191a450ddcfc06682dab466552425842b1c7c9f52f2dce9e443c91b15
-    ```
-
 
 #### start node {#start-node}
 

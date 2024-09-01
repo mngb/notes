@@ -46,6 +46,11 @@ update gems
 `bundle gem <name>` create gem
 
 
+### rakefile {#rakefile}
+
+[常用语法]({{< relref "rakefile#常用语法" >}})
+
+
 ### rspec {#rspec}
 
 `rspec --init` to init
@@ -96,6 +101,7 @@ Assignment Branch Condition size
 -   setup `gem install solargraph`
 -   generate index for all installed gems `yard gems`
     or `yard gems --rebuild`
+    新版 yard 好多问题，先最小的平台 gem 编译好再下载相关 gem
 -   config to generate index auto when install new gems:
     `yard config --gem-install-yri`
 -   `solargraph download-core` install ruby version cores

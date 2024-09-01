@@ -82,10 +82,6 @@ let y = "hello world2"
 putStrLn y
 ```
 
-```text
-hello world2
-```
-
 
 #### basic func {#basic-func}
 
@@ -155,22 +151,6 @@ case [1,2,3] of [] -> "empty"
                 [x,_] -> "two elements"
                 [x,y,_] -> "three elements"
 :}
-```
-
-```text
-Prelude| Prelude| Prelude| Prelude| Prelude|
-<interactive>:30:17-29: warning: [-Woverlapping-patterns]
-    Pattern match is redundant
-    In a case alternative: [] -> ...
-
-<interactive>:31:17-36: warning: [-Woverlapping-patterns]
-    Pattern match is redundant
-    In a case alternative: [x] -> ...
-
-<interactive>:32:17-39: warning: [-Woverlapping-patterns]
-    Pattern match is redundant
-    In a case alternative: [x, _] -> ...
-"three element"
 ```
 
 

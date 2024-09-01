@@ -4,6 +4,15 @@ author = ["PENG Kevin"]
 draft = false
 +++
 
+## 命令参数 {#命令参数}
+
+$0：脚本的名称。
+$1：第一个位置参数
+$#：传递给脚本或函数的参数个数。
+$\*：所有位置参数（作为一个单词处理）。
+$@：所有位置参数（作为独立的词处理）。
+
+
 ## 控制结构 {#控制结构}
 
 
@@ -20,10 +29,6 @@ else
 fi
 ```
 
-```text
-xx
-```
-
 
 ### 循环 for/while {#循环-for-while}
 
@@ -34,11 +39,6 @@ do
 done
 ```
 
-| 1 |
-|---|
-| 2 |
-| 3 |
-
 ```shell
 count=0
 while [ $count -lt 5 ]
@@ -47,13 +47,6 @@ do
     echo $count
 done
 ```
-
-| 1 |
-|---|
-| 2 |
-| 3 |
-| 4 |
-| 5 |
 
 
 ## 参数处理和管道 {#参数处理和管道}
@@ -97,6 +90,10 @@ find ./ -name "*.sh" | xargs ls -l
 
 `ls mv cp rm touch cat more find chmod mkdir pwd cd tar`
 
+tar
+: 压缩 `tar -cxvf <xx.tar.gz> xx`
+    解压缩 `tar -xcvf xx.tar.gz`
+
 
 ### 文本处理相关 {#文本处理相关}
 
@@ -106,6 +103,22 @@ find ./ -name "*.sh" | xargs ls -l
 ### 查看系统状态 {#查看系统状态}
 
 `top du df uname ps fg bg w`
+
+-   查看端口被哪个进程占用 `lsof -i :55555`
+-   查看当前窗口是哪个 tty `tty`
+-   查看当前 tty 下的进程 `ps -t $(tty)`
+
+
+### 系统工具 {#系统工具}
+
+`iperf3` 测试两个端点上下行网速
+
+
+### 用户和权限管理 {#用户和权限管理}
+
+-   增加用户 `useradd -m -g <group> <user>`
+-   设置用户密码 `passwd <user>`
+-   修改用户 `usermod`
 
 
 ## 常用技巧 {#常用技巧}

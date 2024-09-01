@@ -9,10 +9,10 @@ draft = false
 
 ## setup {#setup}
 
-download email
-: apt-get install offlineimap
+download email tool
+: `apt-get install offlineimap`
 
-index email
+index email tool
 : apt-get install mu
 
 
@@ -39,8 +39,19 @@ send email behind socks5 proxy tool
 ## run {#run}
 
 First time, goto `~/` which contain configure files and run
-`offlineimap`, then `mu index --maildir=<config_mail_dir_in_.py>`
+`offlineimap`, then
+For old mu try:
+`mu index --maildir=<config_mail_dir_in_.py>`
+For new mu (1.10.8 verified):
+
+```bash
+mu init --maildir=<config_mail_dir_in_.py>
+mu index
+```
+
 For 163 email, offlineimap need &gt;7.7.3
+offlineimap 有时会卡住，换了 isync ，但是不支持 proxy sock5。
+卡住的问题可能是 proxy 的问题？？重启下 offlineimap 就顺畅了。
 
 
 ## write email {#write-email}
@@ -61,3 +72,8 @@ use `org-mime` package,
 (org-mime-org-subtree-htmlize)
 (mu4e-compose-mode) ; enter email send mode
 ```
+
+
+### 插入图片 {#插入图片}
+
+用插入链接命令, 类型为 `file`, 不能有 `description`

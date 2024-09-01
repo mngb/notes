@@ -43,12 +43,12 @@ indium
 : -   **configure file like this for nodejs program use electron:** ```javascript
         {
             "configurations": [
-        	{
-        	    "name": "demo",
-        	    "type": "node",
-        	    "program": "electron",
-        	    "args": " ."
-        	}
+                {
+                    "name": "demo",
+                    "type": "node",
+                    "program": "electron",
+                    "args": " ."
+                }
             ]
         }
         ```

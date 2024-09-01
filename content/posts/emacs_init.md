@@ -36,103 +36,6 @@ draft = false
 ```
 
 
-## all required ext package list <span class="tag"><span class="ext_list">ext-list</span></span> {#all-required-ext-package-list}
-
-```emacs-lisp
-;; non-melpa packages
-(setq rdf-ext-non-melpa-package-list
-      (list
-       'bookmark-plus ;;
-       'frame ;;
-       'dired+))
-;; melpa packages
-(setq rdf-ext-melpa-package-list
-      (list
-       ;; melpa
-       'use-package
-       'elpa-mirror
-       'esup
-
-       ;; daily
-       'guide-key
-       'keyfreq
-       'undo-tree
-       'company
-       'google-translate
-       'org-super-agenda
-
-       ;; ruby
-       'yaml-mode
-       'inf-ruby
-       'rubocop
-       'robe
-       'enh-ruby-mode
-
-       ;; haskell
-       'haskell-mode
-       'lsp-haskell
-
-       ;; version control
-       'magit
-       'transient
-
-       ;; project manage
-       'projectile
-       'ggtags
-
-       ;; smart
-       'helm
-       'helm-projectile
-       'async
-       'helm-ag
-       'helm-gtags
-       'swiper
-       'swiper-helm
-       ;;'counsel contained in swiper
-       'counsel-projectile
-       ;;; 'dumb-jump ; too slowly deplicate
-       'ace-window
-       'avy
-       'visual-regexp
-       'eyebrowse
-       'ivy
-       'multiple-cursors
-       'yasnippet
-       'yasnippet-classic-snippets
-       'graphviz-dot-mode
-       'beacon
-
-       ;; funning
-       'emms
-       'desktop+
-       'wttrin
-
-       ;; web-dev
-       ;;
-       'js2-mode
-       'web-mode
-       'impatient-mode
-       'skewer-mode
-       'ghub
-       'markdown-mode
-       'indium
-
-       ;; style
-       'organic-green-theme
-       'xterm-color
-
-       ;; email
-       'org-mime
-       'bbdb
-       'bbdb-vcard
-
-       ;; rss
-       'elfeed
-       'elfeed-org
-       ))
-```
-
-
 ## redef customize <span class="tag"><span class="redef">redef</span></span> {#redef-customize}
 
 
@@ -167,7 +70,8 @@ draft = false
   (setq ext-ruby-program (r-get-then-del-env "ruby_program"))
   (setq ext-root-program (getenv "R_PROGRAMS_DIR"))
   (setq ext-root-workspace (getenv "R_WORKSPACE_DIR"))
-  (setq ext-tmp-dir (concat rdf_email "/../tmp/"))
+  (setq ext-tmp-dir (concat rdf-wdir "/_tmp/"))
+  (setq ext-app-home-dir (concat ext-tmp-dir "/_app_home/"))
   (setq calc-gnuplot-name (r-get-then-del-env "gnuplot_program"))
   (setq ext-emailrelay-program (r-get-then-del-env "emailrelay_program"))
   (setq ext-emailrelay-cfg-dir (r-get-then-del-env "emailrelay_cfg_dir"))
@@ -184,6 +88,7 @@ draft = false
   (setq ext-mingw-gcc-program (r-get-then-del-env "mingw_gcc_program"))
   (setq ext-telegram-gui (r-get-then-del-env "telegram_program"))
   (setq ext-rtags-path (r-get-then-del-env "rtags_program"))
+  (setq rdf-all-packages-file "~/.emacs.d/requirements.txt")
   (when ext-rtags-path
     (setq ext-rtags-path (file-name-directory ext-rtags-path)))
   (setq rdf-emacs-org-template-dir
@@ -192,9 +97,11 @@ draft = false
   (if ext-nodejs-dir (setq ext-nodejs-dir (file-name-directory ext-nodejs-dir)))
   ;; grep and find for rgrep command
   (with-windows-nt
-    (setq grep-program "rg")
-    (setq find-program (concat (file-name-directory ext-git-executable-program) "../usr/bin/find.exe"))
+   (setq grep-program "rg")
+   (setq find-program (concat (file-name-directory ext-git-executable-program) "../usr/bin/find.exe"))
    (setq shell-file-name (r-get-then-del-env "shell_file")))
+  (with-linux
+   (setq grep-program "rg"))
   (define-prefix-command 'redef-global-key-bindings-low-effort-map)
   (define-prefix-command 'redef-global-key-bindings-high-effort-map)
   (define-prefix-command 'redef-global-key-bindings-interactive-map)
@@ -226,7 +133,15 @@ draft = false
     (interactive)
     (if (not ext-vpn-program2)
         (message "ext-vpn-program2 not defined!")
-      (async-shell-command ext-vpn-program2))
+      (with-linux
+       (let ((clash-not-running
+              (equal (with-temp-buffer
+                       (call-process "pgrep" nil (current-buffer) nil "clash")
+                       (buffer-string))
+                     "")))
+         (if clash-not-running
+             (r-async-start-process "vpn" "nohup" ext-vpn-program2)
+           (message "Process clash already running")))))
     ;; =call r-auto-setup-proxy after vpn connected=
     ;; select proxy by
     ;;    modify =~/.config/clash/config.yaml= "proxy-groups" field
@@ -242,26 +157,28 @@ draft = false
          (if (> (count-windows) 3)
              (ace-window nil)
            (other-window 1)))
-  (defun ext-skip-buffer-p (buffer-obj)
-    (let ((skip-flag nil))
-      (when buffer-obj
-        (with-current-buffer buffer-obj
-          (setq skip-flag
-                (or (member (buffer-name)
-                            '("*Messages*"
-                              "*Help*" "*elfeed-log*"))
-                    (eql major-mode 'helm-major-mode)
-                    (string-match "^\\*emms.*\\*\\'" (buffer-name))
-                    (string-match "^\\magit-\\w+:.*" (buffer-name))
-                    ))))
-      skip-flag))
+  (defun ext-skip-buffer-p (buffer-name)
+    (or (member buffer-name
+                '("*Messages*"
+                  "*elfeed-log*"
+                  "*sys-init*"
+                  "*lsp-log*"
+                  "*Backtrace*"
+                  "*straight-process*"))
+        (string-match "^\\*helm.*\\*$" buffer-name)
+        (string-match "^\\*emms.*\\*$" buffer-name)
+        (string-match "^magit-\\w+:.*" buffer-name)
+        (string-match "^\\*ruby-lsp-ls.*\\*$" buffer-name)
+        ))
   (defun ext-fetch-buffer (update-buffer)
     (let ((initial-buffer (current-buffer)) ; avoid inf loop
-          (my-next-buffer (funcall update-buffer)))
-      (while (and (ext-skip-buffer-p my-next-buffer)
+          (my-next-buffer nil))
+      (while (and (if my-next-buffer
+                      (ext-skip-buffer-p (buffer-name my-next-buffer))
+                    t)
                   (not (eql my-next-buffer initial-buffer)))
-        (with-current-buffer (funcall update-buffer)
-          (setq my-next-buffer (current-buffer))))))
+        (funcall update-buffer)
+        (setq my-next-buffer (current-buffer)))))
   (defun redef-previous-buffer ()
     (interactive)
     (ext-fetch-buffer 'previous-buffer))
@@ -391,8 +308,14 @@ draft = false
                                      (x-display-pixel-width) (x-display-pixel-height)
                                      record-file-name)
                              tmp-buffer-name))))
+  (defun r-init-sys-env ()
+    (interactive)
+    (async-start-process "sys-init" "nohup" nil
+                         "~/.emacs.d/sys-init.sh"))
+
   (with-linux
-   (add-hook 'after-init-hook 'r-start-vpn2))
+   (add-hook 'after-init-hook 'r-start-vpn2)
+   (add-hook 'after-init-hook 'r-init-sys-env))
 
   :bind-keymap* (("M-l" . redef-global-key-bindings-low-effort-map) ; low effort comand, cost little time to run
                  ("M-h" . redef-global-key-bindings-high-effort-map) ; hight effort command, cost many time to run
@@ -468,7 +391,7 @@ draft = false
           ("o" . occur)
           ("p" . r-open-at-point-system)
           ("P" . proced) ;list system process
-          ("R" . rgrep)
+          ("g" . rgrep)
           ("i" . imenu)
           ("c" . set-buffer-file-coding-system)
           ("F" . toggle-frame-fullscreen)
@@ -487,7 +410,8 @@ draft = false
           ("M-l" . toggle-frame-maximized)
           ("C-x C-c" . save-buffers-kill-terminal)
           :map redef-global-key-bindings-high-effort-map
-          ("e" . gnus) ; read email
+          ("e" . shell-command) ; run external command
+          ("E" . shell-command-on-region) ;
           :map redef-global-key-bindings-org-agenda-map
           ("a" . org-agenda-list)
           ("t" . org-todo-list)
@@ -499,17 +423,39 @@ draft = false
           ("c" . org-capture) ; to define temp tasks
           )
   :config
-  (dotimes (count 52)
-    (let* ((cur-char (cond
-                      ((< count 26) (string (+ ?a count)))
-                      ((< count 52) (string (+ ?A count -26)))
-                      (t "?")))
-           (eval-symbol (intern-soft (concat "ext-work-"
-                                             cur-char
-                                             "-internal"))))
-      (when (and eval-symbol (fboundp eval-symbol))
-        (define-key redef-global-key-bindings-interactive-map (kbd cur-char) eval-symbol)
-        ))))
+  (defun rdf-export-package-names ()
+    ;; 只能导出系统包管理器的包
+    ;; 通过 straight.el 安装的包无法获取
+    ;; (hash-table-keys straight--profile-cache)
+    (interactive)
+    (with-temp-buffer
+      (dolist (pkg package-alist)
+        (insert (symbol-name (car pkg)))
+        (insert "\n"))
+      (write-file rdf-all-packages-file)
+      ))
+  (defun rdf-import-package-names ()
+    (interactive)
+    (setq rdf-ext-melpa-package-list '())
+    (with-temp-buffer
+      (insert-file-contents rdf-all-packages-file)
+      (goto-char (point-min))
+      (while (not (eobp))
+        (let ((line (buffer-substring-no-properties (line-beginning-position) (line-end-position))))
+          (push line rdf-ext-melpa-package-list)
+        (forward-line 1)))))
+  (with-windows-nt
+   (dotimes (count 52)
+     (let* ((cur-char (cond
+                       ((< count 26) (string (+ ?a count)))
+                       ((< count 52) (string (+ ?A count -26)))
+                       (t "?")))
+            (eval-symbol (intern-soft (concat "ext-work-"
+                                              cur-char
+                                              "-internal"))))
+       (when (and eval-symbol (fboundp eval-symbol))
+         (define-key redef-global-key-bindings-interactive-map (kbd cur-char) eval-symbol)
+         )))))
 ```
 
 
@@ -531,19 +477,22 @@ draft = false
   (defun redef-theme-load (theme-style)
     (interactive)
     ;; command (customize-themes) list all known themes
-    (let ((dark-theme-list '(light-blue dichromacy leuven adtaita
-                                     tango tsdh-light whiteboard))
+    (let ((dark-theme-list '(dichromacy leuven
+                                        tango tsdh-light whiteboard))
           (light-theme-list '(monokai tsdh-dark deeper-blue manoj-dark misterioso
                                       tango-dark wheatgrass womat)) ;; tango-dark has strange code in windows
           (theme-to-set (if (equal theme-style 'dark)
                             (if (member 'monokai (custom-available-themes))
                                 'monokai
-                              'tsdh-dark)
-                          'light-blue)))
+                              'misterioso)
+                          'adwaita)))
       ;; dark mean used at night, actualy is a light-theme
       (setq ext-dash-theme-used
             (if (memq theme-to-set dark-theme-list) nil t))
-      (load-theme theme-to-set t)))
+      (load-theme theme-to-set t))
+    (if (equal theme-style 'dark)
+        (set-cursor-color "yellow")
+    (set-cursor-color "black")))
   (defun redef-theme-reload ()
     (interactive)
     (setq rdf-theme-style
@@ -570,9 +519,45 @@ draft = false
   (run-with-idle-timer 52 t ext-set-random-title)
   (funcall ext-set-random-title)
   (redef-theme-load rdf-theme-style)
+
+  (defun r-async-start-process (name program &rest program-args)
+         "A wrapper function for async-start-process"
+         (let* ((func-finish (lambda (proc)
+                               (let ((old-buf (process-buffer proc)))
+                                 (set-process-buffer proc nil)
+                                 (kill-buffer old-buf))
+                               (message "Programs '%s' start success!" (process-command proc))))
+                (pro-obj (apply 'async-start-process name program func-finish program-args))
+                (kill-buffer-query-functions nil)
+                (pro-buf (process-buffer pro-obj)))
+           pro-obj))
+  ;; ai electron based develop tools
+  (defun r-run-cursor ()
+    (interactive)
+    (r-async-start-process "cursor" "nohup"
+                           (concat rdf-pdir "/cursor/cursor-0.39.4x86_64.AppImage")))
+
+  ;; ai rust based develop tools
+  (defun r-run-zed ()
+    (interactive)
+    (r-async-start-process "zed" "nohup"
+                           (concat rdf-pdir "/zed.app/bin/zed")
+                           default-directory))
+
+  ;; ai rust based shell tools
+  ;; install from .deb
+  (defun r-run-wrap ()
+    (interactive)
+    (r-async-start-process "warp" "nohup"
+                           "warp-terminal"
+                           (concat "warp://action/new_tab?path=" default-directory)))
+
   :bind*
   (:map redef-global-key-bindings-high-effort-map
-        ("R" . redef-theme-reload))
+        ("R" . redef-theme-reload)
+        ("c" . r-run-cursor)
+        ("z" . r-run-zed)
+        ("h" . r-run-wrap))
   )
 
 ```
@@ -588,14 +573,14 @@ draft = false
   )
 
 (use-package recentf
-  :defer 2
   :demand t
   :config
   (require 'recentf)
   (setq recentf-auto-cleanup 'never)
   (setq recentf-max-menu-items 25)
-  (setq auto-save-list-file-prefix "~/../app_home/emacs/")
-  (setq recentf-save-file "~/../app_home/emacs/recentf")
+  (setq recentf-max-saved-items 50)
+  (setq auto-save-list-file-prefix (concat ext-app-home-dir "/emacs/"))
+  (setq recentf-save-file (concat ext-app-home-dir "/emacs/recentf"))
   (add-to-list 'recentf-keep 'file-remote-p)
   (recentf-mode 1)
   :bind*
@@ -622,18 +607,16 @@ draft = false
                       ((file-readable-p new-file) new-file)
                       ((file-readable-p old-file) old-file)
                       (t new-file)))
-                   "~/../app_home/ido/ido.last"
-                   "~/../app_home/ido/.ido.last")))
+                   (concat ext-app-home-dir "/ido/ido.last")
+                   (concat ext-app-home-dir "/ido/.ido.last"))))
   )
 
 (use-package eww
-  :defer 3
   :config
-  (setq eww-download-directory "~/../app_home/eww/")
-  )
+  (setq eww-download-directory (concat ext-app-home-dir "/eww/")
+  ))
 
 (use-package bookmark
-  :defer 4
   :bind (:map bookmark-map
               ("r" . bookmark-rename)
          :map bookmark-bmenu-mode-map
@@ -645,13 +628,11 @@ draft = false
   )
 
 (use-package url
-  :defer 5
   :config
-  (setq url-configuration-directory "~/../app_home/emacs/url/")
-  )
+  (setq url-configuration-directory (concat ext-app-home-dir "/emacs/url/")
+  ))
 
 (use-package ibuffer
-  :defer 5
   :bind*
   (("C-x C-b" . ibuffer)
    (:map ibuffer-mode-map
@@ -667,7 +648,7 @@ draft = false
 
 (use-package desktop
   :init
-  (setq desktop-path '("~/../app_home/desktop/"))
+  (setq desktop-path (list (concat ext-app-home-dir "/desktop/")))
   :config
   (setq
    desktop-load-locked-desktop nil ; don't load locked desktop file
@@ -680,35 +661,28 @@ draft = false
             (lambda () nil nil
               (funcall ext-set-random-title)
               (redef-theme-load rdf-theme-style)))
-  (desktop-save-mode 1) ;; disable/enable desktop mode
+  ;;(desktop-save-mode 1) ;; disable/enable desktop mode
   )
 
 (use-package server
   :ensure nil
   :hook (after-init . server-mode))
 
-(use-package helm-flyspell
-  :if ext-helm-mode-used
-  :ensure t
-  :after (helm-mode)
-  :demand t
-  :bind*
-  (:map redef-global-key-bindings-flycheck-map
-        ("c" . helm-flyspell-correct))
-  )
-
 (use-package flyspell
+  :if t
   :demand t
   :bind*
   (:map redef-global-key-bindings-flycheck-map
         ("f" . flyspell-mode))
   :config
-  (setq ispell-program-name "d:/yardf/program/hunspell/bin/hunspell.exe")
+  (with-windows-nt
+   (setq ispell-program-name "d:/yardf/program/hunspell/bin/hunspell.exe"))
   (setq ispell-local-dictionary "en_GB")
   )
 
 (use-package org
   :demand t
+  :after (ein)
   :config
   (org-babel-do-load-languages
    'org-babel-load-languages
@@ -728,6 +702,16 @@ draft = false
   ;; default show content insead of showall
   ;; use TAB and S-TAB to expand-cycle local/global content
   (setq org-startup-folded 'content)
+  ;;
+  ;; 换行时自动缩进
+  ;; 用 setq 直接设置成 t，
+  ;; mode-init 时又变成了 nil
+  ;;
+  ;;(setq org-indent-mode-turns-off-org-adapt-indentation nil)
+  (customize-set-variable 'org-adapt-indentation t)
+
+  ;; swiper conflict with latest org (v9.16.5) due to org update
+  (define-key org-mode-map (kbd "C-s") 'isearch-forward)
 
   :bind*
   (:map redef-global-key-bindings-org-agenda-map
@@ -782,7 +766,8 @@ draft = false
   (add-hook 'text-mode-hook 'turn-on-auto-fill)
   (add-hook 'python-mode-hook
             (lambda () (progn
-                         (set-variable 'py-indent-offset 4)
+                         (set-variable 'py-indent-offset 4) ;; old python-mode
+                         (set-variable 'python-indent-offset 4)
                          (set-variable 'indent-tabs-mode nil))))
   )
 
@@ -808,7 +793,7 @@ draft = false
     (setq apropos-do-all t)   ;apropos wide find v, find f
     (fset 'yes-or-no-p 'y-or-n-p) ;for users prompt
     (show-paren-mode t) ;for paren auto show
-    (which-func-mode t) ;show function-name in mode-line
+    ;;(which-func-mode t) ;show function-name in mode-line, ?? emacs 29.4 has no such feature
     (superword-mode t) ;handle '_' and '-' as part of word
     (column-number-mode nil) ;disable column show, this may slower edit
     (with-windows-nt
@@ -825,14 +810,19 @@ draft = false
     ;; enable default disabled narrow command
     ;; use widden to unhidden narrowed part
     (put 'narrow-to-region 'disabled nil)
+    (setq printer-name "Pantum-M6200W-Series-Pantum-M6200W-Series")
 
     ;; GUI
     (menu-bar-mode 0)
     (scroll-bar-mode 0)
     (tool-bar-mode 0)
-    (global-linum-mode 0)
-    (setq linum-format "%d:")
+    ;; (global-linum-mode 0) ;; emacs 29.x removed this mode
+    ;; (setq linum-format "%d:")
     (defun r-show-current-column-number () (interactive) (current-column))
+
+    ;; suppress link-file open warnings
+    (setq find-file-visit-truename t)
+    (setq find-file-suppress-same-file-warnings t)
 
     ;;; https://stackoverflow.com/questions/384284/how-do-i-rename-an-open-file-in-emacs
     (defun rename-current-buffer-file ()
@@ -874,6 +864,11 @@ draft = false
                                       (propertize (format-mode-line mode-name)
                                                   'face 'font-lock-constant-face)
                                       )
+                                     ;; image info
+                                     (:eval
+                                      (when (eq major-mode 'image-mode)
+                                        ;; Needs imagemagick installed.
+                                        (process-lines "identify" "-format" "[%m %wx%h %b]" (buffer-file-name))))
                                      ;; project info
                                      (:eval
                                       (if (and (fboundp 'projectile-project-name)
@@ -918,7 +913,7 @@ draft = false
                                  (float-time (time-subtract after-init-time
                                                             before-init-time)))
                          gcs-done)
-                (add-hook 'find-file-hook 'rdf-make-sys-file-readonly)
+                ;;(add-hook 'find-file-hook 'rdf-make-sys-file-readonly)
                 ))
     :bind*
     (:map redef-global-key-bindings-low-effort-map
@@ -1048,10 +1043,10 @@ use command `package-delete` to remove package
           "M-t" ;for rust commands
           "M-g" ;for sagemath commands
 
-          "C-c" ;common prefix
+          ;;"C-c" ;common prefix
           ;; "C-x" ;common prefix mut not defined here
           ))
-  (setq guide-key/idle-delay 1.0)
+  (setq guide-key/idle-delay 0)
   (guide-key-mode 1)
   (setq guide-key/popup-window-position 'bottom))
 ```
@@ -1092,7 +1087,27 @@ use command `package-delete` to remove package
   (("C-u" . undo-tree-undo)
    ("C-r" . undo-tree-redo))
   :config
-  (global-undo-tree-mode))
+  (global-undo-tree-mode)
+  (setq undo-tree-auto-save-history t)
+
+  (customize-set-value 'undo-tree-incompatible-major-modes
+                       (list 'term-mode
+                             'image-mode
+                             'authinfo-mode
+                             'hexl-mode
+                             'pdf-view-mode))
+  (add-hook 'find-file-hook
+            (lambda ()
+              (when (or
+                     (string-match-p "\\.log$" (buffer-file-name))
+                     (string-match-p "\\.cache/" (buffer-file-name))
+                     (string-match-p
+                      (regexp-quote
+                       (expand-file-name
+                        (concat ext-app-home-dir ".telega/")))
+                      (buffer-file-name)))
+                (setq-local undo-tree-auto-save-history nil))))
+  (setq undo-tree-history-directory-alist (list `("." . ,(concat ext-app-home-dir "/undo/")))))
 ```
 
 
@@ -1135,18 +1150,6 @@ use 'company-diag' to view current using backend
       (dolist (item cur-global-backends)
         (add-to-list new-backends-list item))
       (add-to-list new-backends-list backend-list)))
-  (add-hook 'emacs-lisp-mode-hook
-            (lambda ()
-              (r-company-gen-local-backends
-               '(company-elisp))))
-  (add-hook 'inferior-emacs-lisp-mode-hook
-            (lambda ()
-              (r-company-gen-local-backends
-               '(company-elisp))))
-  (add-hook 'org-mode-hook
-            (lambda ()
-              (r-company-gen-local-backends
-               '(company-elisp))))
   (add-hook 'c-mode-hook
             (lambda ()
               (r-company-gen-local-backends
@@ -1194,8 +1197,11 @@ use 'company-diag' to view current using backend
 ;;; C-c C-s  schedule date
 ;;; C-c C-d  deadline date
 ;;;
-
+(use-package ox-hugo
+  :ensure t
+  :demand t)
 (use-package org
+  :after (ox-hugo)
   :config
   (setq org-todo-keywords
         ;; avoid use too many items, will difficult to clarify from.
@@ -1218,7 +1224,26 @@ use 'company-diag' to view current using backend
 
   ;; jekyll blog depends on this configuration
   ;; 后缀 "./" 不能去掉，否则 org-blog 导出时会报错
-  (setq org-preview-latex-image-directory "../assets/./")
+  ;;(setq org-preview-latex-image-directory "../assets/./")
+
+  ;; 放在相对目录下，会有奇怪的目录生成，jekyll 看能否导出时设置？？
+  (setq org-preview-latex-image-directory "//tmp/org-latex/")
+  (setq org-latex-packages-alist '(("" "amsmath" t) ("" "amssymb" t))
+        org-html-with-latex 'imagemagick)
+
+  (add-hook 'find-file-hook (lambda ()
+                              (if (and (eq major-mode 'org-mode)
+                                       (or
+                                        (string-prefix-p
+                                         ;; blog dir check
+                                         (expand-file-name (concat rdf-wdir "/jekyll/blog/__all/"))
+                                         (expand-file-name (buffer-file-name)))
+                                        (string-prefix-p
+                                         ;; roam dir check
+                                         (expand-file-name (file-name-directory rdf-emacs-init-file))
+                                         (expand-file-name (buffer-file-name))))
+                                       (setq-local org-preview-latex-image-directory "../assets/./"))
+                                  nil)))
   (setq org-image-actual-width nil)
 
   (setq org-capture-templates
@@ -1237,6 +1262,7 @@ use 'company-diag' to view current using backend
                  "md")
     (defun rdf-export-roam-to-hugo ()
       (interactive)
+      (let ((org-hugo-base-dir (concat ext-root-workspace "/hugo/" "notes/")))
       (mapc (lambda (file)
               (with-current-buffer
                   (find-file-noselect file)
@@ -1244,8 +1270,8 @@ use 'company-diag' to view current using backend
                       (org-latex-preview-ltxpng-directory "static/ltximg/"))
                   (org-hugo-export-wim-to-md))))
             (directory-files-recursively org-roam-directory ".*.org"))
-      (start-process "*hugo-gen*" nil "python3" (concat org-hugo-base-dir "/content/d3/dump_roam_db.py")))
-    (setq org-hugo-base-dir (concat ext-root-workspace "/hugo")))
+      (start-process "*hugo-gen*" nil "python3"
+                     (concat org-hugo-base-dir "/content/d3/dump_roam_db.py"))))
   (require 'ox-publish)
   (defun rdf-export-blog-to-jekyll-filter (output backend info)
     (when (eq backend 'html)
@@ -1289,21 +1315,21 @@ use 'company-diag' to view current using backend
           (list "org-html-theme"
                 :base-directory (concat rdf-fdir "/bext/code/localize/examples/org-html-themes/")
                 :base-extension "css\\|js"
-                :publishing-directory (concat rdf-fdir "/rdoc/html/org-html-themes")
+                :publishing-directory (concat ext-tmp-dir "/rdoc/html/org-html-themes")
                 :recursive t
                 :publishing-function 'org-publish-attachment
                 )
           (list "org-notes-theme"
-                :base-directory (concat rdf-fdir "/rdoc/html/org-html-themes")
+                :base-directory (concat ext-tmp-dir "/rdoc/html/org-html-themes")
                 :base-extension "css\\|js"
-                :publishing-directory (concat rdf-fdir "/rdoc/html/notes/")
+                :publishing-directory (concat ext-tmp-dir "/rdoc/html/notes/")
                 :recursive t
                 :publishing-function 'org-publish-attachment
                 )
           (list "org-notes"
                 :base-directory (concat rdf-fdir "/redef/repos/rdf-mix/roam/")
                 :base-extension "org"
-                :publishing-directory (concat rdf-fdir "/rdoc/html/notes/")
+                :publishing-directory (concat ext-tmp-dir "/rdoc/html/notes/")
                 :recursive t
                 :publishing-function 'org-html-publish-to-html
                 :headline-levels 4
@@ -1312,7 +1338,7 @@ use 'company-diag' to view current using backend
           (list "org-notes-static"
                 :base-directory (concat rdf-fdir "/redef/repos/rdf-mix/roam/")
                 :base-extension "css\\|js\\|png\\|jpg\\|gif\\|pdf\\|mp3\\|ogg\\|swf"
-                :publishing-directory (concat rdf-fdir "/rdoc/html/notes/")
+                :publishing-directory (concat ext-tmp-dir "/rdoc/html/notes/")
                 :recursive t
                 :publishing-function 'org-publish-attachment
                 )
@@ -1321,9 +1347,9 @@ use 'company-diag' to view current using backend
                 :components '("org-html-theme" "org-notes-theme" "org-notes" "org-notes-static"))
         ;; for blogs
           (list "org-blogs"
-                :base-directory (concat rdf-fdir "/workspace/blog/__all")
+                :base-directory (concat rdf-fdir "/workspace/jekyll/blog/__all")
                 :base-extension "org"
-                :publishing-directory (concat rdf-fdir "/workspace/blog/_posts/")
+                :publishing-directory (concat rdf-fdir "/workspace/jekyll/blog/_posts/")
                 :recursive t
                 :publishing-function 'org-html-publish-to-jekyll-html
                 )
@@ -1396,6 +1422,8 @@ use 'company-diag' to view current using backend
   (setq inf-ruby-default-implementation "pry")
   :config
   (autoload 'inf-ruby-minor-mode "inf-ruby" "Run an inferior Ruby process" t)
+  ;; .rbs is for ruby rbs gem
+  (add-to-list 'auto-mode-alist '("\\.rb$\\|\\.pryrc$\\|Rakefile\\|\\.rbs" . ruby-mode))
   (with-windows-nt
    (add-to-list 'inf-ruby-implementations' ("pry". "Pry")))
   (defun r-run-ruby-code (&rest ruby-code)
@@ -1485,7 +1513,7 @@ if report error, run inf-ruby firstly.
   (:map redef-global-key-bindings-high-effort-map
         ("m" . magit-status)
         ("i" . magit-init)
-        ("c" . magit-clone))
+        ("C" . magit-clone))
   :init
   (with-windows-nt
    (setq magit-git-executable ext-git-executable-program)
@@ -1508,16 +1536,17 @@ if report error, run inf-ruby firstly.
   :ensure t
   :demand t
   :init
-  (setq projectile-cache-file "~/../app_home/projectile/projectile.cache")
-  (setq projectile-known-projects-file "~/../app_home/projectile/projectile-bookmarks.eld")
+  (setq projectile-project-search-path (list (concat ext-root-workspace "/../")))
+  (setq projectile-cache-file (concat ext-app-home-dir "/projectile/projectile.cache"))
+  (setq projectile-known-projects-file (concat ext-app-home-dir "/projectile/projectile-bookmarks.eld"))
   :config
   ;;(projectile-global-mode) ;;run this command if error "(wrong-type-argument hash-table-p nil)" happen
   (projectile-mode 1) ;;enable
   ;;Using Emacs Lisp for indexing files is really slow on Windows.
   ;;The alien indexing method uses external tools (e.g. git, find, etc) to speed up the indexing process.
   (setq projectile-indexing-method 'alien)
-  (setq projectile-project-search-path
-        (list (concat (getenv "R_WORKSPACE_DIR"))))
+  ;; (setq projectile-project-search-path
+  ;;       (list (concat (getenv "R_WORKSPACE_DIR"))))
   (setq projectile-git-submodule-command nil) ; avoid echo error in windows
   (projectile-register-project-type 'npm '("package.json")
                                     :project-file "package.json"
@@ -1578,7 +1607,7 @@ if report error, run inf-ruby firstly.
           ("C-x C-y" . helm-show-kill-ring)
           :map redef-global-key-bindings-low-effort-map
           ("i" . helm-imenu)
-          ("g" . helm-recentf)
+          ("R" . helm-recentf)
           ;; depend on 'everything' in windows
           ("L" . helm-locate) ; find in whole drive
           ("l" . r-locate-in-directory)
@@ -1592,9 +1621,14 @@ if report error, run inf-ruby firstly.
   (defun r-locate-in-directory ()
     (interactive)
     (let ((helm-locate-command
-           (concat "es -path "
-                   default-directory
-                   " %s %s")))
+           (or (with-windows-nt
+                (concat "es -path "
+                        default-directory
+                        " %s %s"))
+               (with-linux
+                (concat "locate "
+                        default-directory
+                        " %s -e -A -N --regex %s")))))
       (call-interactively 'helm-locate)))
   (setq helm-split-window-in-side-p           t ; open helm buffer inside current window, not occupy whole other window
         helm-move-to-line-cycle-in-source     t ; move to end or beginning of source when reaching top or bottom of source.
@@ -1682,7 +1716,7 @@ Note that this feature is available only with emacs-25+."
         (set-frame-size helm-popup-frame
                         helm-display-buffer-width
                         helm-display-buffer-height)))
-    (helm-log-run-hook 'helm-window-configuration-hook)))
+    (helm-log-run-hook "rdf-init-el" 'helm-window-configuration-hook)))
   (setq helm-display-function 'rdf-helm-display-buffer-in-own-frame
         helm-display-buffer-reuse-frame t
         helm-display-buffer-width (/ (frame-width) 2)
@@ -1695,10 +1729,7 @@ Note that this feature is available only with emacs-25+."
 
 (use-package helm-ag
   :if ext-helm-mode-used
-  :after (helm-mode))
-
-(use-package swiper-helm
-  :if ext-helm-mode-used
+  :ensure t
   :after (helm-mode))
 
 (use-package helm-projectile
@@ -1872,7 +1903,9 @@ use `list-colors-display` to show all color names.
 ### yasnippet <span class="tag"><span class="yasnippet">yasnippet</span></span> {#yasnippet}
 
 ```emacs-lisp
-(use-package yasnippet-classic-snippets)
+(use-package yasnippet-classic-snippets
+  :ensure t
+  :demand t)
 (use-package yasnippet
   :requires (cl-lib)
   :ensure t
@@ -1880,7 +1913,7 @@ use `list-colors-display` to show all color names.
   :after (yasnippet-classic-snippets)
   :config
   (setq yas-snippet-dirs
-        '("~/.emacs.d/ext/yasnippet/yasnippets-template/" ; contain user defined snippets
+        '("~/.emacs.d/ext/yasnippet/yasnippets-template/snippets/" ; contain user defined snippets
           ;; yas-installed-snippets-dir ; contain default snippets, currently not used
           yasnippet-classic-snippets-dir
           ))
@@ -1960,7 +1993,7 @@ but always return `"plalist"`.
   :requires (cl-lib)
   :ensure t
   :init
-  (setq emms-directory "~/../app_home/emms/")
+  (setq emms-directory (concat ext-app-home-dir "/emms/"))
   :config
   (require 'emms-setup)
   (emms-all)
@@ -1977,7 +2010,12 @@ but always return `"plalist"`.
   (setq emms-repeat-track nil) ;don't repeat one
   (setq emms-repeat-playlist nil) ;don't repeat by list
   (setq emms-random-playlist nil) ;don't do random play
-  (emms-cache-disable)
+
+  ;; emms 20.1 不启用, 播放 playlist 时会报错
+  ;; 原因是 emms-cache-set-function 是空的，但 parse playlist 时需要用到该函数
+  ;;
+  ;;(emms-cache-disable)
+  (emms-cache-enable)
   ;; (delete 'emms-player-mpv emms-player-list)
   (defun r-emms-audio-type-p (name)
     (if name
@@ -2175,8 +2213,7 @@ whether tool
   :demand t
   :mode ("\\.js\\'" . js-mode)
   :config
-  (add-hook 'js-mode-hook #'js2-minor-mode)
-  :defer 8)
+  (add-hook 'js-mode-hook #'js2-minor-mode))
 ```
 
 
@@ -2277,7 +2314,7 @@ whether tool
         )
   :config
   (setq indium-chrome-executable ext-chrome-program)
-  (setq indium-chrome-data-dir "~/../app_home/indium/")
+  (setq indium-chrome-data-dir (concat ext-app-home-dir "/indium/"))
   (setq indium-client-debug t)
   (add-hook 'js-mode-hook #'indium-interaction-mode)
   (defun r-web-start-eletron-program ()
@@ -2340,6 +2377,7 @@ whether tool
 
 ```emacs-lisp
 (use-package typescript-mode
+  :ensure t
   :demand t
   :config
   (add-to-list 'auto-mode-alist '("\\.ts?\\'" . typescript-mode)))
@@ -2383,7 +2421,8 @@ whether tool
     (message-send-and-exit)
     (rdf-send-email))
   :config
-  (require 'nnir)
+  (require 'mm-decode) ;;nnir is obsolete at Emacs 28
+  (require 'message)
   (setq user-mail-address "kevin.remegame@gmail.com"
         user-full-name "PENG Kevin")
   (setq message-directory (concat ext-emailrelay-cfg-dir "/../gnus/"))
@@ -2565,16 +2604,22 @@ whether tool
 <!--listend-->
 
 ```emacs-lisp
-(with-linux
+(eval-and-compile
+  (with-linux
+   (setq ext-mu4e-pkg-path
+         (file-name-directory (string-trim-right
+                               (shell-command-to-string "dpkg -L mu4e | grep mu4e.el")))))
  (use-package mu4e
+   :if (not (equal ext-mu4e-pkg-path ""))
    ;; if not exist this dir, try 'sudo apt-get install mu4e'
-   :load-path "/usr/share/emacs/site-lisp/mu4e/"
+   :load-path ext-mu4e-pkg-path
    :init
    (defun offlineimap-get-password (host port)
      (require 'netrc)
      (let* ((netrc (netrc-parse (expand-file-name "~/.authinfo.gpg")))
             (hostentry (netrc-machine netrc host port port)))
        (when hostentry (netrc-get hostentry "password"))))
+   (setq mu4e-mu-home (concat ext-app-home-dir "/mu/"))
    :config
    (setq mail-user-agent 'mu4e-user-agent)
    (setq mu4e-maildir (concat rdf_email "/gmail/offlineimap/"))
@@ -2615,11 +2660,17 @@ whether tool
            ("/Waiting" . ?w)
            ))
 
+   ;; make-mu4e-bookmark
+   ;;   not exit at (equal mu4e-mu-version "1.10.8")
    (add-to-list 'mu4e-bookmarks
-                (make-mu4e-bookmark
-                 :name "Three days ago"
-                 :query "date:3d..now"
-                 :key ?q))
+                (if 1
+                    '(:name "Three days ago"
+                      :query "date:3d..now"
+                      :key ?q)
+                  (make-mu4e-bookmark
+                   :name "Three days ago"
+                   :query "date:3d..now"
+                   :key ?q)))
 
    :bind*
    (:map redef-global-key-bindings-mail-map
@@ -2748,28 +2799,51 @@ cmake-mode exist in cmake source code.
 
 ### dired <span class="tag"><span class="dired">dired</span></span> {#dired}
 
+```emacs-lisp
+(use-package dired
+  :config
+  (setq dired-listing-switches "-alh"))
+```
+
 
 ### lsp-mode <span class="tag"><span class="lsp">lsp</span></span> {#lsp-mode}
+
+
+#### solargraph {#solargraph}
 
 For ruby solargraph, no more packaged needed. Lsp-mode has support
 lsp-solargraph default, check variables with lsp-solargraph- prefix.
 Sometimes need run `solargraph download-core` and `yard gems` to generate document for
 installed gems.
-For rails support, following the site <https://solargraph.org/guides/rails>
+For rails support, following the site [[<https://solargraph.org/guides/rails>
 Run `bundle exec solargraph bundle` under project dir.
+
+
+#### lsp-ruby {#lsp-ruby}
+
+shopify 支持的项目，主要针对 3.x
 
 ```emacs-lisp
 (setq lsp-keymap-prefix "M-k")
 (use-package lsp-mode
   :ensure t
   :demand t
-  :hook (
-         (ruby-mode . lsp)
-         (c++-mode . lsp)
-         (c-mode . lsp)
-         (haskell-mode . lsp)
-         )
+  ;; 不再自动启动 lsp，容易报错
+  ;; :hook (
+  ;;        (ruby-mode . lsp)
+  ;;        (c++-mode . lsp)
+  ;;        (c-mode . lsp)
+  ;;        (haskell-mode . lsp)
+  ;;        )
+
   :init
+  ;; View all lsp client-id by run:
+  ;;   (hash-table-keys lsp-clients)
+  ;; Change client's priority to decide which server to use first.
+  (setq lsp-disabled-clients
+        (list 'rubocop-ls
+              '(ruby-mode . rubocop-ls)
+              '(ruby-mode . typeprof-ls)))
   :config
   (setq gc-cons-threshold 100000000)
   (setq read-process-output-max (* 1024 1024))
@@ -2778,13 +2852,24 @@ Run `bundle exec solargraph bundle` under project dir.
   (setq lsp-idle-delay 0.500)
   (setq lsp-print-performance t)
   (setq lsp-diagnostic-package :none) ; disable flycheck
-  (setenv "SOLARGRAPH_CACHE" (concat ext-tmp-dir ".solargraph/"))
-  (setq lsp-solargraph-library-directories
-        (list "~/.rbenv/"
-              (concat ext-root-program "/lib/ruby/")
-              "~/.rvm"
-              "~/.gem"
-              ))
+
+  (unless t ;; solargraph disabled
+    (setq lsp-solargraph-use-bundler nil)
+    ;;(setenv "SOLARGRAPH_CACHE" (concat ext-app-home-dir "solargraph/"))
+    ;; (setq lsp-log-io t)
+    ;; there has a bug for solargraph in cache.rb::base_dir
+    ;; we must set XDG_CACHE_HOME to passthrough this bug
+    ;;(setenv "XDG_CACHE_HOME" ext-app-home-dir)
+    (setq lsp-solargraph-library-directories
+          (list "~/.rbenv/"
+                (concat ext-root-program "/lib/ruby/")
+                "~/.rvm"
+                "~/.gem"
+                )))
+  :bind* (
+          :map redef-global-key-bindings-low-effort-map
+               ("M-l" . lsp-mode)
+               )
   )
 
 (use-package lsp-ui
@@ -2995,7 +3080,7 @@ use `elpy-config` to check environments
         )
   :config
   ;; default prompt venv directory
-  (setq pyvenv-default-virtual-env-name "/home/pk/.config/venv/")
+  (setq pyvenv-default-virtual-env-name (concat ext-root-program "/python3/venv/"))
 
   (pyvenv-mode t)
   ;; Set correct Python interpreter
@@ -3004,8 +3089,8 @@ use `elpy-config` to check environments
                 (setq python-shell-interpreter (concat pyvenv-virtual-env "bin/python")))))
   (setq pyvenv-post-deactivate-hooks
         (list (lambda ()
-                (setq python-shell-interpreter "python"))))
-  (pyvenv-activate (concat pyvenv-default-virtual-env-name "python3")))
+                (setq python-shell-interpreter "python3"))))
+  (pyvenv-activate (concat pyvenv-default-virtual-env-name "basic")))
 
 (use-package elpy
   :ensure t
@@ -3035,6 +3120,15 @@ use `elpy-config` to check environments
   (setq python-shell-interpreter "python3")
   (setq elpy-rpc-timeout 2)
   (setq elpy-rpc-virtualenv-path pyvenv-virtual-env)
+
+  ;; fix elpy-check buffer not human readable
+  (require 'ansi-color)
+  (defun r-colorize-compilation-buffer ()
+    (when (eq major-mode 'compilation-mode)
+      (ansi-color-apply-on-region (point-min) (point-max))))
+
+  (add-hook 'compilation-filter-hook 'r-colorize-compilation-buffer)
+
   (setq python-shell-interpreter "ipython"
         python-shell-interpreter-args "-i --simple-prompt")
   )
@@ -3043,15 +3137,18 @@ use `elpy-config` to check environments
 
 ### pinyin <span class="tag"><span class="pinyin">pinyin</span></span> {#pinyin}
 
+sougou scel 词库下载(txt,scel) [scel](https://github.com/pudgelee/SouGouDict/tree/main/scel)
+
 ```emacs-lisp
 (use-package posframe
   :ensure t
   :demand t)
 (use-package pyim-basedict
-  :demand t)
+  :if nil
+  :ensure t)
 (use-package pyim
-  :ensure t
-  :demand t
+  :if nil
+  :straight (pyim :type git :host github :repo "mngb/pyim")
   :after (posframe pyim-basedict)
   :config
   (pyim-basedict-enable)
@@ -3073,7 +3170,10 @@ use `elpy-config` to check environments
   (setq pyim-dicts
         (list (list
                :name "sogou"
-               :file (concat rdf-fdir "/bext/bins/_local_cache/pyim/sogou.pyim"))))
+               :file (concat rdf-fdir "/bext/bins/_local_cache/pyim/sogou.pyim"))
+              (list
+               :name "hack_pyim"
+               :file (concat rdf-fdir "/bext/bins/_local_cache/pyim/self.pyim"))))
   :bind*
   (("M-," . pyim-convert-string-at-point)
    ("M-<" . pyim-punctuation-toggle)
@@ -3090,6 +3190,7 @@ index `rc -J .`
 
 ```emacs-lisp
 (use-package rtags
+  :ensure t
   :demand t
   :init
   (setq rtags-autostart-diagnostics t)
@@ -3099,6 +3200,7 @@ index `rc -J .`
   )
 
 (use-package company-rtags
+  :ensure t
   :demand t
   :after (company)
   :init
@@ -3109,6 +3211,7 @@ index `rc -J .`
 
 (use-package helm-rtags
   :if ext-helm-mode-used
+  :ensure
   :after (helm-mode)
 )
 ```
@@ -3117,10 +3220,11 @@ index `rc -J .`
 ### irony <span class="tag"><span class="cpp">cpp</span><span class="irony">irony</span></span> {#irony}
 
 run `sudo ldconfig /home/pk/program/lib/` in ubuntu to add library for irony-server
-code completion
+code completion. Then run `irony-install-server` to install server
 
 ```emacs-lisp
 (use-package irony-eldoc
+  :ensure t
   :demand t
   :config
   (add-hook 'irony-mode-hook #'irony-eldoc))
@@ -3136,10 +3240,12 @@ code completion
   )
 
 (use-package company-irony-c-headers
+  :ensure t
   :demand t
   :after (irony))
 
 (use-package company-irony
+  :ensure t
   :demand t
   :after (irony company-irony-c-headers)
   :config
@@ -3169,6 +3275,7 @@ Sometimes unintend click a mouse make emacs very slowly.
 ```emacs-lisp
 (use-package disable-mouse
   :demand t
+  :ensure t
   :config
   (global-disable-mouse-mode))
 ```
@@ -3179,6 +3286,7 @@ Sometimes unintend click a mouse make emacs very slowly.
 ```emacs-lisp
 (use-package google-c-style
   :demand t
+  :ensure t
   :config
   (add-hook 'c-mode-common-hook 'google-set-c-style)
   (add-hook 'c++-mode-common-hook 'google-set-c-style)
@@ -3192,6 +3300,7 @@ Sometimes unintend click a mouse make emacs very slowly.
 (use-package flycheck
   :if t ; report error sometimes
   :demand t
+  :ensure t
   :config
   (add-hook 'c-mode-hook 'flycheck-mode 1)
   (add-hook 'c++-mode-hook
@@ -3412,7 +3521,13 @@ Make soft link in `$HOME` for `~/.cargo`, `~/.rustup`
   ;;
   (setq projectile-project-root-files-bottom-up
         (delete ".git" projectile-project-root-files-bottom-up))
-  (push "Cargo.toml" projectile-project-root-files-bottom-up))
+  (push "Cargo.toml" projectile-project-root-files-bottom-up)
+  (push ".git" projectile-project-root-files-bottom-up)
+
+  ;; TODO fix projectile-root-top-down issue
+  ;; https://github.com/bbatsov/projectile/issues/1729
+  ;; 验证了该代码，没有解决该 bug
+  )
 
 (use-package cargo
   :ensure t
@@ -3439,8 +3554,9 @@ Make soft link in `$HOME` for `~/.cargo`, `~/.rustup`
 
 ```emacs-lisp
 (use-package protobuf-mode
- :config
- (require 'protobuf-mode)
+  :ensure t
+  :config
+  (require 'protobuf-mode)
 )
 ```
 
@@ -3449,6 +3565,7 @@ Make soft link in `$HOME` for `~/.cargo`, `~/.rustup`
 
 ```emacs-lisp
 (use-package auto-complete-sage
+  :if nil
   :config
   ;; (ac-config-default) ; this will enable ac global
   (setq ac-sage-show-quick-help t)
@@ -3457,6 +3574,7 @@ Make soft link in `$HOME` for `~/.cargo`, `~/.rustup`
   (add-hook 'sage-shell-mode-hook 'ac-sage-setup))
 
 (use-package sage-shell-mode
+  :if nil
   :config
   (setq sage-shell:sage-executable
         (concat rdf-pdir "/mambaforge/envs/sage/bin/sage"))
@@ -3475,6 +3593,7 @@ Make soft link in `$HOME` for `~/.cargo`, `~/.rustup`
    ("C-p" . ac-previous)))
 
 (use-package ob-sagemath
+  :if nil
   :config
   ;; Ob-sagemath supports only evaluating with a session.
   (setq org-babel-default-header-args:sage '((:session . t)
@@ -3507,9 +3626,11 @@ Make soft link in `$HOME` for `~/.cargo`, `~/.rustup`
   (:map redef-global-key-bindings-org-agenda-map
         ("v" . org-latex-preview)))
 
-(use-package company-auctex)
+(use-package company-auctex
+  :ensure t)
 
 (use-package org-fragtog
+  :ensure t
   :after org
   ;; this auto-enables it when you enter an org-buffer, remove if you do not want this
   :hook (org-mode . org-fragtog-mode)
@@ -3622,14 +3743,25 @@ Make soft link in `$HOME` for `~/.cargo`, `~/.rustup`
 ```emacs-lisp
 (use-package chatgpt-shell
   :ensure t
+  :init
+  (defun read-gpg-file (file-path)
+    "Read and decrypt a GPG file specified by FILE-PATH."
+    (let* ((context (epg-make-context 'OpenPGP))
+           (decrypted-content (epg-decrypt-file context file-path nil)))
+      (with-temp-buffer
+        (insert decrypted-content)
+        (buffer-string))))
   :custom
   ((chatgpt-shell-openai-key
     (lambda ()
-      (auth-source-pass-get 'secret "openai-key"))))
+      (read-gpg-file (concat rdf-fdir "/disk/text/pdata/openapi.key.gpg")))))
   :config
-  (setq chatgpt-shell-openai-key (r-get-then-del-env "openai_key"))
-  ;; check chatgpt-shell-model-versions
-  (setq chatgpt-shell-model-version 5)
+  (setq chatgpt-shell-model-version 2)
+  (add-hook 'chatgpt-shell-mode-hook
+            (lambda ()
+              (setq-local shell-maker-transcript-default-path
+                          (concat ext-app-home-dir "/chatgpt/"))
+              ))
   )
 ```
 
@@ -3667,7 +3799,7 @@ Make soft link in `$HOME` for `~/.cargo`, `~/.rustup`
 ```emacs-lisp
 (use-package org-mime
   :ensure t
-  :load-path "~/.emacs.d/ext/email/org-mime/" ; has a hack in this path
+  ;; :load-path "~/.emacs.d/ext/email/org-mime/" ; has a hack in this path
   :bind
   (:map redef-global-key-bindings-mail-map
         ("O" . org-mime-org-buffer-htmlize)
@@ -3676,8 +3808,9 @@ Make soft link in `$HOME` for `~/.cargo`, `~/.rustup`
         ("h" . org-mime-htmlize)
         )
   :config
-  (setq org-mime-export-options '(:section-numbers nil
-                                                   :with-toc nil))
+  (setq org-mime-export-options '(:with-latex imagemagick
+                                  :section-numbers nil
+                                  :with-toc nil))
   (add-hook 'message-send-hook 'org-mime-confirm-when-no-multipart)
   )
 ```
@@ -3821,7 +3954,7 @@ run `telega-server-build` to build server if update needed.
    :load-path "~/.emacs.d/ext/telegram/telega.el/"
    :after (rainbow-identifiers)
    :init
-   (setq telega-directory (concat ext-tmp-dir ".telega/"))
+   (setq telega-directory (concat ext-app-home-dir ".telega/"))
    :config
    (defun r-start-telegram-gui ()
      (interactive)
@@ -3847,6 +3980,7 @@ run `telega-server-build` to build server if update needed.
 
 ```emacs-lisp
 (use-package flycheck-google-cpplint
+  :ensure t
   :demand t
   :after (flycheck)
   :load-path "~/.emacs.d/ext/flycheck-google-cpplint/"

@@ -44,7 +44,7 @@ rails generate scaffold
 
 `bin/rails generate model Article title:string body:text`
 and run
-`bin/rails db:migration`
+`bin/rails db:migrate`
 
 
 ### open rails console {#open-rails-console}
@@ -112,6 +112,14 @@ show query methods
 3.  call `<jobClass>.perform_async`
 
 
+#### tips {#tips}
+
+`Job.perform_async` 返回的 job_id 是一个字符串，不能当成整形处理！
+
+
+### action cable {#action-cable}
+
+
 ## 最佳实践 {#最佳实践}
 
 
@@ -135,6 +143,60 @@ console 中执行迁移，一般在 migrate 命令出现执行问题时才直接
 在 `application.js` 文件中添加相应包。
 
 
+### 编写路由 {#编写路由}
+
+root
+:
+
+
+resources
+:
+
+
+resource
+:
+
+
+scope
+:
+
+
+module
+:
+
+
+member
+:
+
+
+collection
+:
+
+
+### 编写测试 {#编写测试}
+
+-   可以快速迭代
+-   能熟悉工作原理
+
+
+### 编写 model {#编写-model}
+
+1.  创建一个 model
+    `rails g model <TableName> field:type ...`
+2.  使 model 生效
+    `rails db:migrate`
+3.  修改 model
+    生成一个迁移 `rails g migration <migration_name> field:type`
+    其中 migration_name 可以是
+    -   add_xxx_to_yyy
+    -   remove_xxx_from_yyy
+    -   create_xxx
+    -   xxx join_table yyy
+
+
+### rails 启动流程 {#rails-启动流程}
+
+
 ## tips {#tips}
 
 
@@ -152,6 +214,11 @@ run `spring stop`
 
 为 gmail 重新生成应用专用密码，会解决连接超时的问题，目前还不知道具体原因。
 另外新登录的设备要在 gmail 中确认本人所为，不然好像第二次连接会被屏蔽。
+
+
+#### warning: already initialized constant Net::ProtocRetryError {#warning-already-initialized-constant-net-protocretryerror}
+
+Rails 6.1.7.2 升级 gem mail 后会出现，将 mail 从 2.8+ 降级到  2.7+ 可以消除
 
 
 ### emacs 项目中自动补全 {#emacs-项目中自动补全}

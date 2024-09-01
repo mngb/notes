@@ -7,14 +7,14 @@ draft = false
 ## inline preview {#inline-preview}
 
 use `org-latex-preview` command,
-use \\(x^2 + y^2 = z^2\\) to edit latex formula
+use <img src="/ltximg/latex_4f339647912db8015cabd74cb735bc958ed37418.png" alt="$x^2 + y^2 = z^2$" /> to edit latex formula
 
 
 ## 公式编辑常用符号 {#公式编辑常用符号}
 
--   \\(\int\_{0}^{\infty}\\)
--   \\(\frac{a}{b}\\)
--   \\(\dot{x},\ddot{x},\dddot{x}\\)
+-   <img src="/ltximg/latex_c8c89f23afd2d7aed22093560d1c15b8e77eb962.png" alt="$\int_{0}^{\infty}$" />
+-   <img src="/ltximg/latex_4b04708cb4f7da034256806b39ef57f4da5d4d40.png" alt="$\frac{a}{b}$" />
+-   <img src="/ltximg/latex_987116da94df5e62531cc2457596ab27ebc3298f.png" alt="$\dot{x},\ddot{x},\dddot{x}$" />
 
 
 ## tips {#tips}

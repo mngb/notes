@@ -86,8 +86,8 @@ start with `<name> ::`
 
 ## latex embedded {#latex-embedded}
 
-\\(a^2=b\\), 行内嵌入，use `org-preview-latex` to preview
-\\[a^2 = b\\], 行间嵌入。
+<img src="/ltximg/org_style_2cbb2000fd04267b39ed11238199a988e6f1ce42.png" alt="$a^2=b$" />, 行内嵌入，use `org-preview-latex` to preview
+<img src="/ltximg/org_style_de14a9a9068ae7a03e13ca3f84d7c7e617660c80.png" alt="$$a^2 = b$$" />, 行间嵌入。
 
 
 ## 图片和链接 {#图片和链接}
@@ -100,7 +100,7 @@ start with `<name> ::`
 
 ### image {#image}
 
-<a id="org69e6b7d"></a>
+<a id="org01fef53"></a>
 
 ![](/ox-hugo/example.jpg)
 若要在文档中显示成图片，不能为 link 添加 description, 不然会显示成链接。
@@ -149,20 +149,12 @@ int main()
 }
 ```
 
-```text
-Hello C World!
-```
-
 
 ### rust {#rust}
 
 ```rust
 println!("Hello Rust World!");
 // https://github.com/brotzeit/rustic#org-babel
-```
-
-```text
-Hello Rust World!
 ```
 
 
@@ -177,19 +169,11 @@ int main()
 }
 ```
 
-```text
-Hello CPP World
-```
-
 
 ### ruby {#ruby}
 
 ```ruby
 puts "Hello Ruby World!"
-```
-
-```text
-Hello Ruby World!
 ```
 
 
@@ -199,19 +183,11 @@ Hello Ruby World!
 print("Hello Python World!")
 ```
 
-```text
-Hello Python World!
-```
-
 
 ### haskell {#haskell}
 
 ```haskell
 putStrLn "Hello Haskell World!"
-```
-
-```text
-Hello Haskell World!
 ```
 
 
@@ -232,11 +208,6 @@ test:
 
 ```elisp
 (print "Hello EmacsLisp World!")
-```
-
-```text
-
-"Hello EmacsLisp World!"
 ```
 
 
